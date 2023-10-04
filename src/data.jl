@@ -8,8 +8,15 @@ struct instData
   N::Int # num_nodes
   MRD::Int # max_route_duration 
   Q::Int # veh_capacity 
-  TMRT::Int # temp_max_ride_time
-  NMRT # nodes maximum ride times
+  timeMRT::Int # temp_max_ride_time
+  noMRT # nodes maximum ride times
+  id # id node
+  coord_x # coord x
+  coord_y # coord y
+  serv_time # service_time 
+  demand # load 
+  start_tw # start_tw 
+  end_tw # end_tw
 end
 
 export instData, readData
@@ -30,36 +37,48 @@ function readData(instFile,params)
   aux = aux+1
   Q = parse(Int,tokens[aux])
   aux = aux+1
-  TMRT = parse(Int,tokens[aux])
+  timeMRT = parse(Int,tokens[aux])
 
   println(K)
   println(N)
   println(MRD)
   println(Q)
-  println(TMRT)
+  println(timeMRT)
 
   #resize data structures according to N
-  NMRT = zeros(Float64,N)
-  #D = zeros(Int,N)
+  noMRT = zeros(Float64,N)  
+  id = zeros(Int,N)
+  coord_x = zeros(Float64,N)
+  coord_y = zeros(Float64,N)
+  serv_time = zeros(Float64,N) 
+  demand = zeros(Float64,N)
+  start_tw = zeros(Float64,N) 
+  end_tw = zeros(Float64,N)
 
-  for t=1:N
-    NMRT[t] = TMRT
+  for i=1:N
+    noMRT[i] = timeMRT
   end
   
-  #aux = aux+1
-  #FR[1] = parse(Float64,tokens[aux])
-  #for t=2:N
-  #  FR[t] = FR[1]
-  #end
+  for i=1:N
+    aux = aux+1
+    id[i] = parse(Int,tokens[aux])
+    aux = aux+1
+    coord_x[i] = parse(Float64,tokens[aux])
+    aux = aux+1
+    coord_y[i] = parse(Float64,tokens[aux])
+    aux = aux+1
+    serv_time[i] = parse(Float64,tokens[aux]) 
+    aux = aux+1
+    demand[i] = parse(Float64,tokens[aux])
+    aux = aux+1
+    start_tw[i] = parse(Float64,tokens[aux]) 
+    aux = aux+1
+    end_tw[i] = parse(Float64,tokens[aux])
+  end
   
-  #for t in 1:N
-  #  aux = aux+1
-  #  D[t] = parse(Int,tokens[aux])
-  #end
-
   close(file)
 
-  inst = instData(K,N,MRD,Q,TMRT,NMRT)
+  inst = instData(K,N,MRD,Q,timeMRT,noMRT,id,coord_x,coord_y,serv_time,demand,start_tw,end_tw)
 
   return inst
 

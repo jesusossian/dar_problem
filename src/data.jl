@@ -3,7 +3,7 @@ module data
 #using Statistics
 #using Random
 
-struct instData
+mutable struct instData
   K::Int # num_vehicles 
   N::Int # num_nodes
   MRD::Int # max_route_duration 

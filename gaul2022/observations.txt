@@ -1,1 +1,4 @@
-firts file(main): darp_milp_3.cpp
+firts file(main): src/apps/darp_milp_3.cpp
+firts file(main): src/apps/darp_milp_6.cpp
+
+

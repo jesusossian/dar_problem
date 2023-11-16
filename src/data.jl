@@ -30,31 +30,31 @@ function readData(instFile,params)
 
   # read the problem's dimensions N
   aux = 1
-  K = parse(Int,tokens[aux])
+  K = parse(Int,tokens[aux]) # number of vehicles
   aux = aux+1
-  N = parse(Int,tokens[aux])
+  N = parse(Int,tokens[aux]) # number of nodes
   aux = aux+1
-  MRD = parse(Int,tokens[aux])
+  MRD = parse(Int,tokens[aux]) # maximum route duration
   aux = aux+1
-  Q = parse(Int,tokens[aux])
+  Q = parse(Int,tokens[aux]) # vehicle capacity
   aux = aux+1
-  timeMRT = parse(Int,tokens[aux])
+  timeMRT = parse(Int,tokens[aux]) # maximum ride time
 
-  println(K)
-  println(N)
-  println(MRD)
-  println(Q)
-  println(timeMRT)
+  #println(K)
+  #println(N)
+  #println(MRD)
+  #println(Q)
+  #println(timeMRT)
 
   #resize data structures according to N
-  noMRT = zeros(Float64,N)  
-  id = zeros(Int,N)
-  coord_x = zeros(Float64,N)
-  coord_y = zeros(Float64,N)
-  serv_time = zeros(Float64,N) 
-  demand = zeros(Float64,N)
-  start_tw = zeros(Float64,N) 
-  end_tw = zeros(Float64,N)
+  noMRT = zeros(Float64,N)  # maximum ride times
+  id = zeros(Int,N) # id 
+  coord_x = zeros(Float64,N) # x
+  coord_y = zeros(Float64,N) # y 
+  serv_time = zeros(Float64,N) # service_time 
+  demand = zeros(Float64,N) # load 
+  start_tw = zeros(Float64,N) # start_tw 
+  end_tw = zeros(Float64,N) # end_tw
 
   for i=1:N
     noMRT[i] = timeMRT

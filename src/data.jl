@@ -4,89 +4,90 @@ module data
 #using Random
 
 mutable struct instData
-  K::Int # num_vehicles 
-  N::Int # num_nodes
-  MRD::Int # max_route_duration 
-  Q::Int # veh_capacity 
-  timeMRT::Int # temp_max_ride_time
-  noMRT # nodes maximum ride times
-  id # id node
-  coord_x # coord x
-  coord_y # coord y
-  serv_time # service_time 
-  demand # load 
-  start_tw # start_tw 
-  end_tw # end_tw
-  num_requests # number of requests
+    K::Int # num_vehicles 
+    N::Int # if cordeau num_users/requests, if gaul num_nodes 
+    MRD::Int # max_route_duration 
+    Q::Int # veh_capacity 
+    timeMRT::Int # temp_max_ride_time
+    noMRT # nodes maximum ride times
+    id # id node
+    cx # coord x
+    cy # coord y
+    st # service_time 
+    d # load 
+    stw # start_tw 
+    etw # end_tw
+    nr # number of requests
+    nn # number of nodes
 end
 
 export instData, readData
 
 function readData(instFile,params)
-  file = open(instFile)
-  fileText = read(file, String)
-  tokens = split(fileText) 
-  #tokens will have all the tokens of the input file in a single vector. We will get the input token by token
+    file = open(instFile)
+    fileText = read(file, String)
+    tokens = split(fileText) 
+    #tokens will have all the tokens of the input file in a single vector. We will get the input token by token
 
-  # read the problem's dimensions N
-  aux = 1
-  K = parse(Int,tokens[aux]) # number of vehicles
-  aux = aux+1
-  N = parse(Int,tokens[aux]) # number of nodes
-  aux = aux+1
-  MRD = parse(Int,tokens[aux]) # maximum route duration
-  aux = aux+1
-  Q = parse(Int,tokens[aux]) # vehicle capacity
-  aux = aux+1
-  timeMRT = parse(Int,tokens[aux]) # maximum ride time
+    #read the problem's dimensions N
+    aux = 1
+    K = parse(Int,tokens[aux]) # number of vehicles
+    aux = aux+1
+    N = parse(Int,tokens[aux]) # number of nodes
+    aux = aux+1
+    MRD = parse(Int,tokens[aux]) # maximum route duration, T_k
+    aux = aux+1
+    Q = parse(Int,tokens[aux]) # vehicle capacity, Q_k 
+    aux = aux+1
+    timeMRT = parse(Int,tokens[aux]) # maximum ride time
 
-  #println(K)
-  #println(N)
-  #println(MRD)
-  #println(Q)
-  #println(timeMRT)
+    #println(K)
+    #println(N)
+    #println(MRD)
+    #println(Q)
+    #println(timeMRT)
 
-  #resize data structures according to N
-  noMRT = zeros(Float64,N)  # maximum ride times
-  id = zeros(Int,N) # id 
-  coord_x = zeros(Float64,N) # x
-  coord_y = zeros(Float64,N) # y 
-  serv_time = zeros(Float64,N) # service_time 
-  demand = zeros(Float64,N) # load 
-  start_tw = zeros(Float64,N) # start_tw 
-  end_tw = zeros(Float64,N) # end_tw
+    nn = 2*N+2
+    #resize data structures according to N
+    noMRT = zeros(Float64,nn)  # maximum ride times, L
+    id = zeros(Int,nn) # id nodes, id
+    cx = zeros(Float64,nn) # coord x, cx
+    cy = zeros(Float64,nn) # coord y, cy 
+    st = zeros(Float64,nn) # service_time,  
+    d = zeros(Float64,nn) # load 
+    stw = zeros(Float64,nn) # start_tw 
+    etw = zeros(Float64,nn) # end_tw
 
-  for i=1:N
-    noMRT[i] = timeMRT
-  end
+    for i=1:nn
+        noMRT[i] = timeMRT
+    end
   
-  for i=1:N
-    aux = aux+1
-    id[i] = parse(Int,tokens[aux])
-    aux = aux+1
-    coord_x[i] = parse(Float64,tokens[aux])
-    aux = aux+1
-    coord_y[i] = parse(Float64,tokens[aux])
-    aux = aux+1
-    serv_time[i] = parse(Float64,tokens[aux]) 
-    aux = aux+1
-    demand[i] = parse(Float64,tokens[aux])
-    aux = aux+1
-    start_tw[i] = parse(Float64,tokens[aux]) 
-    aux = aux+1
-    end_tw[i] = parse(Float64,tokens[aux])
-  end
+    for i=1:nn
+        aux = aux+1
+        id[i] = parse(Int,tokens[aux])
+        aux = aux+1
+        cx[i] = parse(Float64,tokens[aux])
+        aux = aux+1
+        cy[i] = parse(Float64,tokens[aux])
+        aux = aux+1
+        st[i] = parse(Float64,tokens[aux]) 
+        aux = aux+1
+        d[i] = parse(Float64,tokens[aux])
+        aux = aux+1
+        stw[i] = parse(Float64,tokens[aux]) 
+        aux = aux+1
+        etw[i] = parse(Float64,tokens[aux])
+    end
   
-  num_requests = N
+    nr = N
   
-  println(num_requests)
-
+    #println(num_requests)
   
-  close(file)
+    close(file)
 
-  inst = instData(K,N,MRD,Q,timeMRT,noMRT,id,coord_x,coord_y,serv_time,demand,start_tw,end_tw,num_requests)
+    inst = instData(K,N,MRD,Q,timeMRT,noMRT,id,cx,cy,st,d,stw,etw,nr,nn)
 
-  return inst
+    return inst
 
 end
 

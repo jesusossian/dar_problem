@@ -12,16 +12,16 @@ using CPLEX
 
 import data
 import parameters
-#import stdForm
+import formCordeau
 
-params = parameters.readParam(ARGS)
+params = parameters.readParams(ARGS)
 
 #julia 1clsr.jl --inst instancia --form ${form} 
 
 # read instance data
 inst = data.readData(params.instName, params)
 
-#if (params.form == "std")
-#    stdFormulation.stdForm(inst, params)
+#if (params.form == "cordeau")
+formCordeau.fCordeau(inst, params)
 #end
 

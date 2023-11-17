@@ -1,8 +1,8 @@
 module parameters
 
-struct paramData
+struct paramsData
   instName::String
-  form::String ### std mc sp
+  form::String ### cordeau gaul
   solver::String
   method::String
   maxtime::Int
@@ -12,9 +12,9 @@ struct paramData
 
 end
 
-export paramData, readParam
+export paramsData, readParams
 
-function readParam(ARGS)
+function readParams(ARGS)
 
   ### Set standard values for the parameters ###
   instName = "/home/jossian/repository/dar_problem/instances/darp_bc/a2-16.txt"
@@ -56,7 +56,7 @@ function readParam(ARGS)
     end
   end
 
-  params = paramData(
+  params = paramsData(
     instName,
     form,
     solver,

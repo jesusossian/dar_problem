@@ -20,6 +20,7 @@ import sys
 from datetime import datetime, date
 
 import formGaul as gaul
+import formCordeau as cordeau
 
 if __name__ == "__main__":
 
@@ -36,6 +37,6 @@ if __name__ == "__main__":
     #instance_ = f"{method_}_{form_}_{inst_}.txt"
 	
     #if form_ == "gaul":
-    gaul.form_gaul(method_,data_)
+    cordeau.form_cordeau(method_,data_)
     #else:
     #	print("parameters errado!")

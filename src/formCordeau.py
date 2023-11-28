@@ -14,21 +14,23 @@ def form_cordeau(method_,data_,out_path_,instance_):
     line = file_in.readline().split()
     K = int(line[0]) # number of vehicles
     N = int(line[1]) # number of nodes
-    MRD = int(line[2]) # maximum route duration, T
+    MRD = int(line[2]) # maximum route duration for vehicle, T
     Q = int(line[3]) # vehicles capacity, Q
-    timeMRT = int(line[4]) # total duration of its route, L
+    timeMRT = int(line[4]) # maximum ride time of user
+    
+    # total duration of its route cannot exceed T_k
     
     print(K,N,MRD,Q,timeMRT)
       
     NN = 2*N+2
 
-    #lst_Q = []  # maximum ride times, Q_i
-    #for t in range(0,NN):
-    #    lst_Q.append(Q)
+    lst_Q = []  # capacity of vehicle
+    for t in range(0,K):
+        lst_Q.append(Q)
     
-    lst_noMRT = []  # maximum ride times, L_k    
-    for t in range(0,N):
-        lst_noMRT.append(timeMRT)
+    lst_vMRD = []  # maximum ride times, T_k    
+    for t in range(0,K):
+        lst_vMRD.append(MRD)
 
     lst_id = [] # id nodes, id
     lst_x = [] # coord x, cx
@@ -68,6 +70,9 @@ def form_cordeau(method_,data_,out_path_,instance_):
     #gap = np.zeros((N), dtype=float)
     #nodes = np.zeros((N), dtype=float)
     #status = np.zeros((N), dtype=float)
+
+    M = np.zeros((NN,NN,K), dtype=float)
+    W = np.zeros((NN,NN,K), dtype=float)
 
     model = gp.Model(f"{data_}")
         
@@ -120,25 +125,25 @@ def form_cordeau(method_,data_,out_path_,instance_):
     # constraint 2
     for i in range(1,N):
         con = 0
-        for t in range(0, K):
-            for j in range(0, NN):
+        for t in range(0,K):
+            for j in range(0,NN):
                 con += x[i,j,t]
         model.addConstr(con == 1)
 
     # constraint 3
     for i in range(1,N):
-        for t in range(0, K):
+        for t in range(0,K):
             con = 0
-            for j in range(0, NN):
+            for j in range(0,NN):
                 con += x[i,j,t]
             for j in range(0, NN):
                 con -= x[N+i,j,t]
             model.addConstr(con == 0)
 
     # constraint 4
-    for t in range(0, K):
+    for t in range(0,K):
         con = 0
-        for j in range(0, NN):
+        for j in range(0,NN):
             con += x[0,j,t]
         model.addConstr(con == 1)
 
@@ -146,51 +151,91 @@ def form_cordeau(method_,data_,out_path_,instance_):
     for i in range(1,NN-1):
         for t in range(0, K):
             con = 0
-            for j in range(0, NN):
+            for j in range(0,NN):
                 con += x[j,i,t]
-            for j in range(0, NN):
+            for j in range(0,NN):
                 con -= x[i,j,t]
             model.addConstr(con == 0)
 
     # constraint 6
     for t in range(0, K):
         con = 0
-        for i in range(0, NN):
+        for i in range(0,NN):
             con += x[i,2*N+1,t]
         model.addConstr(con == 1)
         
     # constraint 7
-    for i in range(0,NN):
-        for j in range(0, NN):
-            for t in range(0, K):
-                model.addConstr(B[j,t] <= (B[i,t] + lst_d[i] + ctim[i,j] )*x[i,j,t])
+    #for i in range(0,NN):
+    #    for j in range(0,NN):
+    #        for t in range(0, K):
+    #            model.addConstr(B[j,t] <= (B[i,t] + lst_d[i] + ctim[i,j] )*x[i,j,t])
 
     # constraint 8
-    for i in range(0,NN):
-        for j in range(0, NN):
-            for t in range(0, K):
-                model.addConstr(vQ[j,t] <= (vQ[i,t] + lst_st[j] )*x[i,j,t])
-                
+    #for i in range(0,NN):
+    #    for j in range(0,NN):
+    #        for t in range(0, K):
+    #            model.addConstr(vQ[j,t] <= (vQ[i,t] + lst_st[j] )*x[i,j,t])
+
+    # constraint 15
+#    for i in range(0,NN):
+#        for j in range(0,NN):
+#            for t in range(0,K):
+#                M[i,j,t] >= max(0,lst_etw[i] + lst_d[i] + ctim[i,j] - lst_stw[j])
+
+#    for i in range(0,NN):
+#        for j in range(0,NN):
+#            for t in range(0,K):
+#                model.addConstr(B[j,t] >= B[i,t] + lst_d[i] + ctim[i,j] - M[i,j,t]*(1 - x[i,j,t]))
+
+    # constraint 16
+#    for i in range(0,NN):
+#        for j in range(0,NN):
+#            for t in range(0,K):
+#                W[i,j,t] >= min(lst_Q[t], lst_Q[t] + lst_st[t])
+
+#    for i in range(0,NN):
+#        for j in range(0,NN):
+#            for t in range(0,K):
+#                model.addConstr(vQ[j,t] <= vQ[i,t] + lst_st[j] - W[i,j,t]*(1-x[i,j,t]))
+               
     # constraint 9
     for i in range(1,N):
-        for t in range(0, K):
+        for t in range(0,K):
             model.addConstr(vL[i,t] == B[N+i,t] - (B[i,t] + lst_d[i]) )
 
-    # constraint 9
-    for t in range(0, K):
-        model.addConstr(B[2*N*1,t] - B[0,t] <=  lst_noMRT[t])
-
+    # constraint 10
+    for t in range(0,K):
+        model.addConstr(B[2*N+1,t] - B[0,t] <=  lst_vMRD[t])
     
-    # constraint 11
+    # constraint 11_1
     for i in range(0,NN):
-        for t in range(0, K):
+        for t in range(0,K):
             model.addConstr(B[i,t] >= lst_stw[i])
 
-    # constraint 11
+    # constraint 11_2
     for i in range(0,NN):
-        for t in range(0, K):
+        for t in range(0,K):
             model.addConstr(B[i,t] <= lst_etw[i])
 
+    # constraint 12_1
+    for i in range(1,N):
+        for t in range(0,K):
+            model.addConstr(vL[i,t] >= ctim[i,N+i])
+
+    # constraint 12_2
+    for i in range(1,N):
+        for t in range(0,K):
+            model.addConstr(vL[i,t] <= timeMRT)
+
+    # constraint 13_1
+    for i in range(0,NN):
+        for t in range(0,K):
+            model.addConstr(max(0,lst_st[i]) <= vQ[i,t])
+
+    # constraint 13_1
+    for i in range(0,NN):
+        for t in range(0,K):
+            model.addConstr(vQ[i,t] <= min(lst_Q[t],lst_Q[t]+lst_st[i]))
 
     model.write(f"{data_}.lp")
 

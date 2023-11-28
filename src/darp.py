@@ -29,14 +29,14 @@ if __name__ == "__main__":
     else:
         data_ = sys.argv[1]
         method_ = sys.argv[2]
-        #form_ = sys.argv[3]
-        #inst_ = sys.argv[4]
+        inst_ = sys.argv[3]
+        form_ = sys.argv[4]
         
 
-    #out_path = Path(f"result/{inst_}")
-    #instance_ = f"{method_}_{form_}_{inst_}.txt"
+    out_path_ = Path(f"../result")
+    instance_ = f"{method_}_{form_}_{inst_}.txt"
 	
-    #if form_ == "gaul":
-    cordeau.form_cordeau(method_,data_)
-    #else:
-    #	print("parameters errado!")
+    if form_ == "cordeau":
+        cordeau.form_cordeau(method_,data_,out_path_,instance_)
+    else:
+    	print("parameters errado!")

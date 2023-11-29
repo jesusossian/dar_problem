@@ -6,6 +6,7 @@ import gurobipy as gp
 from gurobipy import GRB
 import time as trun
 import igraph as ig
+import math
 
 def form_cordeau(method_,data_,out_path_,instance_):
 
@@ -15,64 +16,61 @@ def form_cordeau(method_,data_,out_path_,instance_):
     K = int(line[0]) # number of vehicles
     N = int(line[1]) # number of nodes
     MRD = int(line[2]) # maximum route duration for vehicle, T
-    Q = int(line[3]) # vehicles capacity, Q
-    timeMRT = int(line[4]) # maximum ride time of user
+    VehCap = int(line[3]) # vehicles capacity, Q
+    MRT = int(line[4]) # maximum ride time of user
     
     # total duration of its route cannot exceed T_k
     
-    print(K,N,MRD,Q,timeMRT)
-      
-    NN = 2*N+2
+    print(K,N,MRD,VehCap,MRT)
+ 
+    lst_VehCap = []  # capacity of vehicle, Q_k
+    for t in range(0,K):
+        lst_VehCap.append(VehCap)
 
-    lst_Q = []  # capacity of vehicle
+    lst_MRD = []  # maximum ride times, T_k    
     for t in range(0,K):
-        lst_Q.append(Q)
+        lst_MRD.append(MRD)
     
-    lst_vMRD = []  # maximum ride times, T_k    
-    for t in range(0,K):
-        lst_vMRD.append(MRD)
+    lst_MRT = []  # maximum ride times, L_i    
+    for i in range(0,2*(N+1)):
+        lst_MRT.append(MRT)
 
     lst_id = [] # id nodes, id
     lst_x = [] # coord x, cx
     lst_y = [] # coord y, cy 
     lst_st = [] # service_time,  q_i
-    lst_d = [] # load, d_i
+    lst_demand = [] # load, d_i
     lst_stw = [] # start_tw, e_i 
     lst_etw = [] # end_tw, l_i
     
-    for t in range(0,NN):
+    for t in range(0,2*(N+1)):
         line = file_in.readline().split()
         lst_id.append(int(line[0]))
         lst_x.append(float(line[1]))
         lst_y.append(float(line[2]))
         lst_st.append(int(line[3]))
-        lst_d.append(int(line[4]))
+        lst_demand.append(int(line[4]))
         lst_stw.append(int(line[5]))
         lst_etw.append(int(line[6]))
         
-    for t in range(0,NN):
-        print(lst_id[t]," ",lst_x[t]," ",lst_y[t]," ",lst_st[t]," ",lst_d[t]," ",lst_stw[t]," ",lst_etw[t])
+    #for t in range(0,2*(N+1)):
+    #    print(lst_id[t]," ",lst_x[t]," ",lst_y[t]," ",lst_st[t]," ",lst_demand[t]," ",lst_stw[t]," ",lst_etw[t])
         
     file_in.close()
 
-    cost = np.zeros((NN,NN),dtype=float)
-    ctim = np.zeros((NN,NN),dtype=float)
-    for i in range(0,NN):
-        for j in range(0,NN):
-            dist = np.linalg.norm(lst_x[i]-lst_y[j])
-            print(dist)
-            cost[i,j] = dist
-            ctim[i,j] = dist
+    rcost = np.zeros((2*(N+1),2*(N+1)),dtype=float)
+    ttime = np.zeros((2*(N+1),2*(N+1)),dtype=float)
+    for i in range(0,2*(N+1)):
+        for j in range(0,2*(N+1)):
+            #dist = np.linalg.norm(lst_x[i]-lst_y[j])
+            dist = (lst_x[i]-lst_x[j])*(lst_x[i]-lst_x[j]) + (lst_y[i]-lst_y[j])*(lst_y[i]-lst_y[j])
+            dist = math.sqrt(dist)
+            #print(dist)
+            rcost[i,j] = dist
+            ttime[i,j] = dist
 
-    #lb = np.zeros((N), dtype=float)
-    #ub = np.zeros((N), dtype=float)
-    #time = np.zeros((N), dtype=float)
-    #gap = np.zeros((N), dtype=float)
-    #nodes = np.zeros((N), dtype=float)
-    #status = np.zeros((N), dtype=float)
-
-    M = np.zeros((NN,NN,K), dtype=float)
-    W = np.zeros((NN,NN,K), dtype=float)
+    M = np.zeros((2*(N+1),2*(N+1),K), dtype=float)
+    W = np.zeros((2*(N+1),2*(N+1),K), dtype=float)
 
     model = gp.Model(f"{data_}")
         
@@ -89,13 +87,13 @@ def form_cordeau(method_,data_,out_path_,instance_):
 
     tuple0 = list(tuple())
     for t in range(0,K):
-        for i in range(0, NN):
-            for j in range(0, NN):
+        for i in range(0,2*(N+1)):
+            for j in range(0,2*(N+1)):
                 tuple0.append((i,j,t))
 
     tuple1 = list(tuple())
     for t in range(0,K):
-        for i in range(0, NN):
+        for i in range(0,2*(N+1)):
             tuple1.append((i,t))
 
     if (method_=="mip"):
@@ -109,13 +107,10 @@ def form_cordeau(method_,data_,out_path_,instance_):
     
     obj = 0
     for t in range(0,K):
-        for i in range(0,NN):
-            for j in range(0,NN):
-                obj += cost[i][j]*x[i,j,t]
+        for i in range(0,2*(N+1)):
+            for j in range(0,2*(N+1)):
+                obj += rcost[i][j]*x[i,j,t]
         
-#    obj += 1 * x[j]
-#    sum(sum(sum(cost[i][j]*x[i,j] for i=0:NN) for 0=1:NN) for t=0:K)
-    
     model.setObjective(obj, GRB.MINIMIZE)
     
     # P = {1, ..., N }
@@ -126,7 +121,7 @@ def form_cordeau(method_,data_,out_path_,instance_):
     for i in range(1,N):
         con = 0
         for t in range(0,K):
-            for j in range(0,NN):
+            for j in range(0,2*(N+1)):
                 con += x[i,j,t]
         model.addConstr(con == 1)
 
@@ -134,108 +129,108 @@ def form_cordeau(method_,data_,out_path_,instance_):
     for i in range(1,N):
         for t in range(0,K):
             con = 0
-            for j in range(0,NN):
+            for j in range(0,2*(N+1)):
                 con += x[i,j,t]
-            for j in range(0, NN):
+            for j in range(0,2*(N+1)):
                 con -= x[N+i,j,t]
             model.addConstr(con == 0)
 
     # constraint 4
     for t in range(0,K):
         con = 0
-        for j in range(0,NN):
+        for j in range(0,2*(N+1)):
             con += x[0,j,t]
         model.addConstr(con == 1)
 
     # constraint 5
-    for i in range(1,NN-1):
-        for t in range(0, K):
+    for i in range(1,2*N+1):
+        for t in range(0,K):
             con = 0
-            for j in range(0,NN):
+            for j in range(0,2*(N+1)):
                 con += x[j,i,t]
-            for j in range(0,NN):
+            for j in range(0,2*(N+1)):
                 con -= x[i,j,t]
             model.addConstr(con == 0)
 
     # constraint 6
-    for t in range(0, K):
+    for t in range(0,K):
         con = 0
-        for i in range(0,NN):
+        for i in range(0,2*(N+1)):
             con += x[i,2*N+1,t]
         model.addConstr(con == 1)
         
     # constraint 7
-    #for i in range(0,NN):
-    #    for j in range(0,NN):
-    #        for t in range(0, K):
-    #            model.addConstr(B[j,t] <= (B[i,t] + lst_d[i] + ctim[i,j] )*x[i,j,t])
+    for i in range(0,2*(N+1)):
+        for j in range(0,2*(N+1)):
+            for t in range(0,K):
+                model.addConstr(B[j,t] >= (B[i,t] + lst_demand[i] + ttime[i,j] )*x[i,j,t])
 
     # constraint 8
-    #for i in range(0,NN):
-    #    for j in range(0,NN):
-    #        for t in range(0, K):
-    #            model.addConstr(vQ[j,t] <= (vQ[i,t] + lst_st[j] )*x[i,j,t])
+    for i in range(0,2*(N+1)):
+        for j in range(0,2*(N+1)):
+            for t in range(0,K):
+                model.addConstr(vQ[j,t] >= (vQ[i,t] + lst_st[j] )*x[i,j,t])
 
     # constraint 15
-#    for i in range(0,NN):
-#        for j in range(0,NN):
+#    for i in range(0,2*(N+1)):
+#        for j in range(0,2*(N+1)):
 #            for t in range(0,K):
-#                M[i,j,t] >= max(0,lst_etw[i] + lst_d[i] + ctim[i,j] - lst_stw[j])
+#                M[i,j,t] >= max(0,lst_etw[i] + lst_demand[i] + ctim[i,j] - lst_stw[j])
 
-#    for i in range(0,NN):
-#        for j in range(0,NN):
+#    for i in range(0,2*(N+1)):
+#        for j in range(0,2*(N+1)):
 #            for t in range(0,K):
-#                model.addConstr(B[j,t] >= B[i,t] + lst_d[i] + ctim[i,j] - M[i,j,t]*(1 - x[i,j,t]))
+#                model.addConstr(B[j,t] >= B[i,t] + lst_demand[i] + ctim[i,j] - M[i,j,t]*(1 - x[i,j,t]))
 
     # constraint 16
-#    for i in range(0,NN):
-#        for j in range(0,NN):
+#    for i in range(0,2*(N+1)):
+#        for j in range(0,2*(N+1)):
 #            for t in range(0,K):
 #                W[i,j,t] >= min(lst_Q[t], lst_Q[t] + lst_st[t])
 
-#    for i in range(0,NN):
-#        for j in range(0,NN):
+#    for i in range(0,2*(N+1)):
+#        for j in range(0,2*(N+1)):
 #            for t in range(0,K):
-#                model.addConstr(vQ[j,t] <= vQ[i,t] + lst_st[j] - W[i,j,t]*(1-x[i,j,t]))
+#                model.addConstr(vQ[j,t] <= vQ[i,t] + lst_st[j] - W[i,j,t]*(1 - x[i,j,t]))
                
     # constraint 9
     for i in range(1,N):
         for t in range(0,K):
-            model.addConstr(vL[i,t] == B[N+i,t] - (B[i,t] + lst_d[i]) )
+            model.addConstr(vL[i,t] == B[N+i,t] - (B[i,t] + lst_demand[i]) )
 
     # constraint 10
     for t in range(0,K):
-        model.addConstr(B[2*N+1,t] - B[0,t] <=  lst_vMRD[t])
+        model.addConstr(B[2*N+1,t] - B[0,t] <=  lst_MRD[t])
     
     # constraint 11_1
-    for i in range(0,NN):
+    for i in range(0,2*(N+1)):
         for t in range(0,K):
             model.addConstr(B[i,t] >= lst_stw[i])
 
     # constraint 11_2
-    for i in range(0,NN):
+    for i in range(0,2*(N+1)):
         for t in range(0,K):
             model.addConstr(B[i,t] <= lst_etw[i])
 
     # constraint 12_1
     for i in range(1,N):
         for t in range(0,K):
-            model.addConstr(vL[i,t] >= ctim[i,N+i])
+            model.addConstr(vL[i,t] >= ttime[i,N+i])
 
     # constraint 12_2
     for i in range(1,N):
         for t in range(0,K):
-            model.addConstr(vL[i,t] <= timeMRT)
+            model.addConstr(vL[i,t] <= MRT)
 
     # constraint 13_1
-    for i in range(0,NN):
+    for i in range(0,2*(N+1)):
         for t in range(0,K):
             model.addConstr(max(0,lst_st[i]) <= vQ[i,t])
 
     # constraint 13_1
-    for i in range(0,NN):
+    for i in range(0,2*(N+1)):
         for t in range(0,K):
-            model.addConstr(vQ[i,t] <= min(lst_Q[t],lst_Q[t]+lst_st[i]))
+            model.addConstr(vQ[i,t] <= min(lst_VehCap[t],lst_VehCap[t]+lst_st[i]))
 
     model.write(f"{data_}.lp")
 

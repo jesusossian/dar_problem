@@ -167,7 +167,7 @@ void DARP::read_file(std::string infile, std::string data_directory, std::string
     }
 
     // Read first line of file, which contains the following data:
-    // number of vehicles, number of nodes, maximum route duration, vehicle capacity, maximum ride time 
+    // number of vehicles(K), number of nodes(N), maximum route duration, vehicle capacity(Q), maximum ride time(L) 
     getline(file,line);
     std::istringstream f(line);
     f >> num_vehicles >> num_nodes >> max_route_duration >> veh_capacity >> temp_max_ride_time;

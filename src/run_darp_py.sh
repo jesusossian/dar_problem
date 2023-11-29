@@ -10,6 +10,6 @@ for veh_ in a2
 do
     for no_ in 16
     do
-        python3 darp.py ../instances/darp_bc/${veh_}-${no_}.txt ${method_} ${veh_}_${no_}  ${form_}
+        python3 darp.py ../instances/darp_bc/${veh_}-${no_}.txt ${method_} ${veh_}_${no_} ${form_}
     done
 done

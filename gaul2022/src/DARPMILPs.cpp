@@ -1,8 +1,7 @@
 #include "DARPH.h"
 
 template <int Q>
-bool EBMILP<Q>::solve_furtado(DARP& D, DARPGraph<Q>& G)
-{
+bool EBMILP<Q>::solve_furtado(DARP& D, DARPGraph<Q>& G) {
     // measure model and solve time
     const auto before = clock::now();
     
@@ -18,18 +17,15 @@ bool EBMILP<Q>::solve_furtado(DARP& D, DARPGraph<Q>& G)
 
     IloEnv env;
     
-    try
-    { 
+    try { 
         IloModel model(env);
         
         // Variables
         IloArray<IloNumVarArray> x(env,2*n+2); // nodes 0, 2n+1
         // initialize 
-        for (int i = 0; i <= 2*n+1; i++) 
-        {
+        for (int i = 0; i <= 2*n+1; i++) {
             x[i] = IloNumVarArray(env,2*n+2);
-            for (int j = 0; j <= 2*n+1; j++)
-            {
+            for (int j = 0; j <= 2*n+1; j++) {
                 name << "x_{" << i << "," << j << "}";
                 x[i][j] = IloNumVar(env, 0, 1, ILOBOOL, name.str().c_str());
                 name.str("");  
@@ -37,8 +33,7 @@ bool EBMILP<Q>::solve_furtado(DARP& D, DARPGraph<Q>& G)
         }
         
         IloNumVarArray QQ(env,2*n+2);
-        for (int i=0; i<=2*n; i++)
-        {
+        for (int i=0; i<=2*n; i++) {
             name << "Q_" << i;
             QQ[i] = IloNumVar(env, max(0, D.nodes[i].demand), min(D.veh_capacity, D.veh_capacity + D.nodes[i].demand), ILOFLOAT, name.str().c_str());
             name.str("");
@@ -49,31 +44,25 @@ bool EBMILP<Q>::solve_furtado(DARP& D, DARPGraph<Q>& G)
 
 
         IloNumVarArray B(env,2*n+2);
-        for (int i=0; i<=2*n+1; i++)
-        {
+        for (int i=0; i<=2*n+1; i++) {
             name << "B_" << i;
             B[i] = IloNumVar(env, 0, IloInfinity, ILOFLOAT, name.str().c_str());
             name.str("");
         }
 
         IloNumVarArray v(env,2*n+1);
-        for (int i=1; i<=2*n; i++)
-        {
+        for (int i=1; i<=2*n; i++) {
             name << "v_" << i;
             v[i] = IloNumVar(env, 0, IloInfinity, ILOFLOAT, name.str().c_str());
             name.str("");
         }
 
-   
-
         IloExpr obj1(env); // routing costs
         
         // Create objective function
-        for (int i = 0; i <= 2*n; i++)
-        {   
+        for (int i = 0; i <= 2*n; i++) {   
             // j \in {0, 2n}
-            for (int j = 0; j <= 2*n; j++)
-            {
+            for (int j = 0; j <= 2*n; j++) {
                 obj1 += D.d[i][j] * x[i][j];  
             } 
             // j = 2n+1   
@@ -81,8 +70,7 @@ bool EBMILP<Q>::solve_furtado(DARP& D, DARPGraph<Q>& G)
         }
         // i = 2n+1
         // j \in {0, 2n}
-        for (int j = 0; j <= 2*n; j++)
-        {
+        for (int j = 0; j <= 2*n; j++) {
             obj1 += D.d[0][j] * x[2*n+1][j];  
         } 
         // i = 2n+1, j = 2n+1
@@ -279,10 +267,12 @@ bool EBMILP<Q>::solve_furtado(DARP& D, DARPGraph<Q>& G)
         
         // Create the solver object
         IloCplex cplex(model);
+        cplex.exportModel("qkp.lp");
+        
         const sec dur_model = clock::now() - before;
 
         cplex.setParam(IloCplex::Param::TimeLimit, 7200);
-        
+                
         solved = cplex.solve();
         const sec dur_solve = clock::now() - before;   
         
@@ -290,7 +280,7 @@ bool EBMILP<Q>::solve_furtado(DARP& D, DARPGraph<Q>& G)
         {
             // If CPLEX successfully solved the model, print the results
             std::cout << "\n\nCplex success!\n";
-            std::cout << "\tStatus: " << cplex.getStatus() << "\n";
+            std::cout << "\tStatus : " << cplex.getStatus() << "\n";
             std::cout << "\tObjective value: " << cplex.getObjValue() << "\n";
             std::cout << "\tTotal routing costs: " << cplex.getValue(obj1) << "\n";
             std::cout << "\t Relative MIP Gap: " << cplex.getMIPRelativeGap() << "\n";
@@ -742,6 +732,8 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         
         // Create the solver object
         IloCplex cplex(model);
+        cplex.exportModel("qkp.lp");
+        
         const sec dur_model = clock::now() - before;
 
         
@@ -756,7 +748,7 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         {
             // If CPLEX successfully solved the model, print the results
             std::cout << "\n\nCplex success!\n";
-            std::cout << "\tStatus: " << cplex.getStatus() << "\n";
+            std::cout << "\tStatus tt: " << cplex.getStatus() << "\n";
             std::cout << "\tObjective value: " << cplex.getObjValue() << "\n";
             std::cout << "\tTotal routing costs: " << cplex.getValue(obj1) << "\n";
             std::cout << "\t Relative MIP Gap: " << cplex.getMIPRelativeGap() << "\n";

@@ -27,16 +27,14 @@ DARP::DARP(int n) : num_requests{n}, num_nodes{2*n} {
     pred_array = new int[num_nodes+1];
     route_num = new int[num_nodes+1];
     routed = new bool[num_nodes+1];
-    for (int i = 0; i < num_nodes+1; i++)
-    {
+    for (int i = 0; i < num_nodes+1; i++) {
         routed[i] = false;
     }
 
     // Allocate memory for route array when problem is loaded 
     route = NULL;
 
-    for (int i=1; i<=num_requests; ++i)
-    {
+    for (int i=1; i<=num_requests; ++i) {
         R.push_back(i);
     }
 }
@@ -56,8 +54,7 @@ DARP::~DARP() {
 }
 
 
-DARP::DARP(DARP& D)
-{
+DARP::DARP(DARP& D) {
     instance_mode = D.instance_mode;
 
     num_requests = D.num_requests;
@@ -80,10 +77,8 @@ DARP::DARP(DARP& D)
         tt[i] = tt[i-1] + (num_nodes+1) ;
 
     // copy values of D.d into d and D.tt into tt
-    for (int i=0; i<=num_nodes; ++i)
-    {
-        for (int j=0; j<=num_nodes; ++j)
-        {
+    for (int i=0; i<=num_nodes; ++i) {
+        for (int j=0; j<=num_nodes; ++j) {
             d[i][j] = D.d[i][j];
             tt[i][j] = D.tt[i][j];
         }
@@ -97,8 +92,7 @@ DARP::DARP(DARP& D)
     routed = new bool[num_nodes+1];
     
     // copy values
-    for (int i=0; i<=num_nodes; ++i)
-    {
+    for (int i=0; i<=num_nodes; ++i) {
         nodes[i] = D.nodes[i];
         next_array[i] = D.next_array[i];
         pred_array[i] = D.pred_array[i];
@@ -107,37 +101,31 @@ DARP::DARP(DARP& D)
     }
     
     route = new DARPRoute[num_vehicles];
-    for (int k=0; k<num_vehicles; ++k)
-    {
+    for (int k=0; k<num_vehicles; ++k) {
         route[k] = D.route[k];
     }
 
     R = D.R;
 }
 
-void DARP::preprocess()
-{
+void DARP::preprocess() {
     ///
     /// this functions tightens the time windows of the non-critical vertex 
     /// according to Cordeau [2006]
     ///
     int n = num_requests;
     
-    for (int i = 1; i<=n; ++i)
-    {
+    for (int i = 1; i<=n; ++i) {
         
-        if (nodes[i].start_tw < DARPH_EPSILON && nodes[i].end_tw >= max_route_duration) 
-        {
+        if (nodes[i].start_tw < DARPH_EPSILON && nodes[i].end_tw >= max_route_duration) {
             nodes[i].end_tw = DARPH_MAX(0,nodes[n+i].end_tw - tt[i][n+i]- nodes[i].service_time);
             nodes[i].start_tw = DARPH_MAX(0,nodes[n+i].start_tw - nodes[i].max_ride_time - nodes[i].service_time);
-            if (nodes[i].end_tw <= nodes[i].start_tw)
-            {
+            if (nodes[i].end_tw <= nodes[i].start_tw) {
                 fprintf(stderr, "%s: Time window preprocessing at node %d leads to error in time windows.\n",__FUNCTION__, i);
                 exit(-1);
             }
         }
-        if (nodes[n+i].start_tw < DARPH_EPSILON && nodes[n+i].end_tw >= max_route_duration)
-        {
+        if (nodes[n+i].start_tw < DARPH_EPSILON && nodes[n+i].end_tw >= max_route_duration) {
             nodes[n+i].start_tw = nodes[i].start_tw + nodes[i].service_time + tt[i][n+i];
             nodes[n+i].end_tw = nodes[i].end_tw + nodes[i].service_time + nodes[i].max_ride_time;
         }
@@ -160,8 +148,7 @@ void DARP::read_file(std::string infile, std::string data_directory, std::string
     std::ifstream file;
     std::string line;
     file.open(infile.c_str(), std::ios_base::in);
-    if (!file)
-    {
+    if (!file) {
         fprintf(stderr,"%s: file error\n", __FUNCTION__);
         exit(-1);
     }
@@ -171,53 +158,58 @@ void DARP::read_file(std::string infile, std::string data_directory, std::string
     getline(file,line);
     std::istringstream f(line);
     f >> num_vehicles >> num_nodes >> max_route_duration >> veh_capacity >> temp_max_ride_time;
+    std::cout << "num_veh=" << num_vehicles << std::endl;
+    std::cout << "num_nodes=" << num_nodes << std::endl;
+    std::cout << "max_route_duration=" << max_route_duration << std::endl;
+    std::cout << "veh_capacity=" << veh_capacity << std::endl;
+    std::cout << "temp_max_ride_time=" << temp_max_ride_time << std::endl;
     
-    if (instance_mode == 1)
-    {
+    if (instance_mode == 1) {
         // The following lines have to be changed if there are individual maximum ride times
-        for (i=1; i<=num_nodes; ++i)
-        {
+        for (i=1; i<=num_nodes; ++i) {
             nodes[i].max_ride_time = temp_max_ride_time;
         }
         
         // Read in the next lines until EOF is reached, which contain the data
         // id x y service_time load start_tw end_tw
         i = 0;
-        while(i<=num_nodes)
-        {
+        while(i<=num_nodes) {
             std::getline(file,line);
             std::istringstream iss(line);
             iss >> nodes[i].id >> nodes[i].x >> nodes[i].y >> nodes[i].service_time >> nodes[i].demand >> nodes[i].start_tw >> nodes[i].end_tw;
+  
+            std::cout << nodes[i].id << " ";
+            std::cout << nodes[i].x << " "; 
+            std::cout << nodes[i].y << " ";
+            std::cout << nodes[i].service_time << " ";
+            std::cout << nodes[i].demand << " ";
+            std::cout << nodes[i].start_tw << " ";
+            std::cout << nodes[i].end_tw << std::endl;
+
             i++;
         }
-        for (i=1; i<=num_requests/2; ++i)
-        {
+        for (i=1; i<=num_requests/2; ++i) {
             // first half of requests is outbound
             nodes[i].tw_length = nodes[num_requests+i].end_tw - nodes[num_requests+i].start_tw;
             nodes[num_requests+i].tw_length = nodes[i].tw_length;
         }
-        for (i=num_requests/2+1; i<=num_requests; ++i)
-        {
+        for (i=num_requests/2+1; i<=num_requests; ++i) {
             // second half of requests is inbound
             nodes[i].tw_length = nodes[i].end_tw - nodes[i].start_tw;
             nodes[num_requests+i].tw_length = nodes[i].tw_length;
         }
-    }
-    else
-    {
+    } else {
         // Read in the next lines until EOF is reached, which contain the data
         // id service_time load start_tw end_tw max_ride_time
         i = 0;
-        while(i<=num_nodes)
-        {
+        while(i<=num_nodes) {
             std::getline(file,line);
             std::istringstream iss(line);
             iss >> nodes[i].id >> nodes[i].service_time >> nodes[i].demand >> nodes[i].start_tw >> nodes[i].end_tw >> nodes[i].max_ride_time;
             i++;
         }
         // all requests are inbound
-        for (i=1; i<=num_requests; i++)
-        {
+        for (i=1; i<=num_requests; i++) {
             nodes[i].tw_length = nodes[i].end_tw - nodes[i].start_tw;
             nodes[num_requests+i].tw_length = nodes[i].tw_length; 
         }  
@@ -226,15 +218,12 @@ void DARP::read_file(std::string infile, std::string data_directory, std::string
     file.close();
 
     // check if requested load is greater than the vehicle capacity
-    for (i=0; i<=num_requests; ++i)
-    {
-        if (nodes[i].demand > veh_capacity)
-        {
+    for (i=0; i<=num_requests; ++i) {
+        if (nodes[i].demand > veh_capacity) {
             fprintf(stderr, "Problem instance is infeasible due to excess load: demand of request %d is %d, vehicle capacity is %d\n", i, nodes[i].demand, veh_capacity);
             exit(-1);
         }
-        if (nodes[num_requests+i].demand < -veh_capacity)
-        {
+        if (nodes[num_requests+i].demand < -veh_capacity) {
             fprintf(stderr, "Problem instance is infeasible due to excess load: demand of request %d is %d, vehicle capacity is %d\n", i, nodes[num_requests+i].demand, veh_capacity);
             exit(-1);
         }
@@ -244,37 +233,31 @@ void DARP::read_file(std::string infile, std::string data_directory, std::string
     route = new DARPRoute[num_vehicles];
     
     // Create distance and travel time matrix 
-    if (instance_mode == 1)
-    {
-        for(i=0; i<=num_nodes; ++i)
-        {
-            for(j=0; j<=num_nodes; j++)
-            {
+    if (instance_mode == 1) {
+        for(i=0; i<=num_nodes; ++i) {
+            for(j=0; j<=num_nodes; j++) {
                 val = sqrt((nodes[i].x - nodes[j].x) * (nodes[i].x - nodes[j].x) 
                         + (nodes[i].y - nodes[j].y) * (nodes[i].y - nodes[j].y));
                 d[i][j] = roundf(val * 100) / 100; 
                 tt[i][j] = d[i][j];
-            }  
+                std::cout << d[i][j] << " ";
+            }
+            std::cout << " " << std::endl;
         }
-    }    
-    else
-    {
+    } else {
         std::string path_to_costs = data_directory + instance + "_c_a.txt";
 
         file.open(path_to_costs.c_str(), std::ios_base::in);
-        if (!file)
-        {
+        if (!file) {
             fprintf(stderr, "%s: costs file error\n", __FUNCTION__);
             exit(-1);
         }
             
 
-        for(i=0; i<num_nodes+1; ++i)
-        {
+        for(i=0; i<num_nodes+1; ++i) {
             std::getline(file,line);
             std::istringstream iss(line);
-            for(j=0; j<num_nodes+1; j++)
-            {
+            for(j=0; j<num_nodes+1; j++) {
                 iss >> d[i][j];
                 val = 1.8246 * d[i][j] + 2.3690; // based on linear regression with data = all completed rides (Jan, Feb 21)
                 tt[i][j] = roundf(val * 100) / 100;
@@ -285,6 +268,3 @@ void DARP::read_file(std::string infile, std::string data_directory, std::string
     
     return;
 }
-
-
-

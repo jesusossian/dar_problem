@@ -20,7 +20,8 @@ import sys
 from datetime import datetime, date
 
 import formGaul as gaul
-import formCordeau as cordeau
+import formCordeau0 as cordeau0
+import formCordeau1 as cordeau1
 
 if __name__ == "__main__":
 
@@ -36,7 +37,9 @@ if __name__ == "__main__":
     out_path_ = Path(f"../result")
     instance_ = f"{method_}_{form_}_{inst_}.txt"
 	
-    if form_ == "cordeau":
-        cordeau.form_cordeau(method_,data_,out_path_,instance_)
+    if form_ == "cordeau0":
+        cordeau0.form_cordeau(method_,data_,out_path_,instance_)
+    elif form_ == "cordeau1":
+        cordeau1.form_cordeau(method_,data_,out_path_,instance_)
     else:
     	print("parameters errado!")

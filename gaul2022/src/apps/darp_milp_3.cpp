@@ -36,11 +36,11 @@ int main(int argc,char* argv[])
         consider_excess_ride_time = false;
     }
    
-    EB.solve(accept_all, consider_excess_ride_time, D, G);
+    //EB.solve(accept_all, consider_excess_ride_time, D, G);
     
     // solve other MILP formulations (only routing costs implemented as objective function)
     //EB.solve_furtado(D,G);
-    //EB.solve_cordeau(D,G);
+    EB.solve_cordeau(D,G);
     //EB.solve_milpI(D,G);    
     
     return 0;

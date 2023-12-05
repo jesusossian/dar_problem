@@ -351,6 +351,7 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
             }
         }
 
+        // the time at which vehicle k begins service at node i
         IloNumVarArray B_0(env, D.num_vehicles);
         for (int k = 0; k < D.num_vehicles; k++)
         {
@@ -358,6 +359,7 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
             B_0[k] = IloNumVar(env, D.nodes[0].start_tw, D.nodes[0].end_tw, ILOFLOAT, name.str().c_str());
             name.str(""); // Clean name
         }
+        
         IloNumVarArray B_2n1(env, D.num_vehicles);
         for (int k = 0; k < D.num_vehicles; k++)
         {
@@ -365,8 +367,9 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
             B_2n1[k] = IloNumVar(env, D.nodes[0].start_tw, D.nodes[0].end_tw, ILOFLOAT, name.str().c_str());
             name.str(""); // Clean name
         }
+        
         IloNumVarArray B(env,2*n+1);
-        // B[0] weglassen weil es B_0^k gibt 
+        // B[0] weglassen weil es B_0^k gibt ~ Omit B[0] because there is B_0^k
         for (int i = 1; i <= 2*n; i++)
         {
             name << "B_" << i;
@@ -374,15 +377,17 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
             name.str("");
         }
 
+        // ride time of user i
         IloNumVarArray L(env, n+1);
-        // L[0] weglassen
+        // L[0] weglassen ~ Omit L[0]
         for (int i = 1; i <= n; i++)
         {
             name << "L_" << i;
             L[i] = IloNumVar(env, D.tt[i][n+i], D.nodes[i].max_ride_time, ILOFLOAT, name.str().c_str());
             name.str("");
         }
-
+  
+        // the load of vehicle k after visiting node i
         IloNumVarArray QQ_0(env, D.num_vehicles);
         for (int k = 0; k < D.num_vehicles; k++)
         {
@@ -398,7 +403,7 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
             name.str(""); // Clean name
         }
         IloNumVarArray QQ(env,2*n+1);
-        // QQ[0] weglassen wegen Q_0^k
+        // QQ[0] weglassen wegen Q_0^k ~ Omit QQ[0] because of Q_0^k
         for (int i = 1; i <= 2*n; i++)
         {
             name << "Q_" << i;
@@ -418,28 +423,22 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         IloExpr obj1(env); // routing costs
         
         // Create objective function
-        for (int i = 0; i <= 2*n; i++)
-        {   
+        for (int i = 0; i <= 2*n; i++) {   
             // j \in {0, 2n}
-            for (int j = 0; j <= 2*n; j++)
-            {
-                for (int k = 0; k < D.num_vehicles; k++)
-                {
+            for (int j = 0; j <= 2*n; j++) {
+                for (int k = 0; k < D.num_vehicles; k++) {
                     obj1 += D.d[i][j] * x[i][j][k];  
                 }
-            } 
+            }
             // j = 2n+1   
-            for (int k = 0; k < D.num_vehicles; k++)
-            {
+            for (int k = 0; k < D.num_vehicles; k++) {
                 obj1 += D.d[i][0] * x[i][2*n+1][k];
             } 
         }
         // i = 2n+1
         // j \in {0, 2n}
-        for (int j = 0; j <= 2*n; j++)
-        {
-            for (int k = 0; k < D.num_vehicles; k++)
-            {
+        for (int j = 0; j <= 2*n; j++) {
+            for (int k = 0; k < D.num_vehicles; k++) {
                 obj1 += D.d[0][j] * x[2*n+1][j][k];  
             }
         } 
@@ -452,64 +451,49 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         IloExpr expr(env);
         
         
-        for (int k = 0; k < D.num_vehicles; k++)
-        {
+        for (int k = 0; k < D.num_vehicles; k++) {
             // x_{i,i} = 0 for all i
-            for (int i = 0; i<=2*n+1; i++)
-            {
+            for (int i = 0; i<=2*n+1; i++) {
                 model.add(IloRange(env,0,x[i][i][k],0));
             }
             // x_{i,0} = 0 for all i \in P U D and i = 2*n+1
-            for (int i = 1; i<=2*n+1; i++)
-            {
+            for (int i = 1; i<=2*n+1; i++) {
                 model.add(IloRange(env,0,x[i][0][k],0));
             }
             // x_{2*n+1,i} = 0 for all i \in P U D and i = 0
-            for (int i = 0; i<=2*n; i++)
-            {
+            for (int i = 0; i<=2*n; i++) {
                 model.add(IloRange(env,0,x[2*n+1][i][k],0));
             }
             // x_{i,2*n+1} = 0 for all i \in P 
             // x_{n+i,i} = 0 for all i \in P 
-            for (int i = 1; i<=n; i++)
-            {
+            for (int i = 1; i<=n; i++) {
                 model.add(IloRange(env,0,x[i][2*n+1][k],0));
                 model.add(IloRange(env,0,x[n+i][i][k],0));
             }
             // x_{0,i} = 0 for all i \in D
-            for (int i = n+1; i<=2*n; i++)
-            {
+            for (int i = n+1; i<=2*n; i++) {
                 model.add(IloRange(env,0,x[0][i][k],0));
             }
         }
         
-        for (int i=1; i<=n; i++)
-        {
-            for (int j=1; j<=n; j++)
-            {
-                if (j != i)
-                {
+        for (int i=1; i<=n; i++) {
+            for (int j=1; j<=n; j++) {
+                if (j != i) {
                     // x_{i,j} = 0
-                    if (f[j][i][0] == 0 && f[j][i][1] == 0)
-                    {
-                        for (int k=0; k<D.num_vehicles; k++)
-                        {
+                    if (f[j][i][0] == 0 && f[j][i][1] == 0) {
+                        for (int k=0; k<D.num_vehicles; k++) {
                             model.add(IloRange(env,0,x[i][j][k],0));
                         }
                     }
                     // x_{n+i,n+j} = 0
-                    if (f[j][i][0] == 0 && f[i][j][1] == 0)
-                    {
-                        for (int k=0; k<D.num_vehicles; k++)
-                        {
+                    if (f[j][i][0] == 0 && f[i][j][1] == 0) {
+                        for (int k=0; k<D.num_vehicles; k++) {
                             model.add(IloRange(env,0,x[n+i][n+j][k],0));
                         }
                     }
                     // x_{i,n+j} = 0
-                    if (f[i][j][0] == 0)
-                    {
-                        for (int k=0; k<D.num_vehicles; k++)
-                        {
+                    if (f[i][j][0] == 0) {
+                        for (int k=0; k<D.num_vehicles; k++) {
                             model.add(IloRange(env,0,x[i][n+j][k],0));
                         }
                     }
@@ -518,14 +502,11 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         }
         
         // pick_up - jeder user wird nur von genau einem Fahrzeug abgeholt und fährt danach zu genau einem anderen Knoten
-        for (int i = 1; i<=n; i++)
-        {
-            for (int j = 0; j<=2*n+1; j++)
-            {
-                if (j != i)
-                {
-                    for (int k=0; k < D.num_vehicles; k++)
-                    {
+        // ~ pick_up - each user is picked up by exactly one vehicle and then travels to exactly one different node
+        for (int i = 1; i<=n; i++) {
+            for (int j = 0; j<=2*n+1; j++) {
+                if (j != i) {
+                    for (int k=0; k < D.num_vehicles; k++) {
                         expr += x[i][j][k];
                     }
                 } 
@@ -539,18 +520,15 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         
         IloExpr expr2(env);
         // drop_off - jeder der abgeholt wird muss auch wieder abgesetzt werden (von demselben Fahrzeug)
-        for (int k=0; k<D.num_vehicles; k++)
-        {
+        // ~ drop_off - everyone who is picked up must also be dropped off again (by the same vehicle)
+        for (int k=0; k<D.num_vehicles; k++) {
             drop_off[k] = IloRangeArray(env,n+1);
-            for (int i = 1; i<=n; i++)
-            {
-                for (int j = 0; j<=2*n+1; j++)
-                {
+            for (int i = 1; i<=n; i++) {
+                for (int j = 0; j<=2*n+1; j++) {
                     if (j!=i)
                         expr += x[i][j][k];
                 }
-                for (int j = 0; j<=2*n+1; j++)
-                {
+                for (int j = 0; j<=2*n+1; j++) {
                     if (j!=n+i)
                         expr2 += x[n+i][j][k];
                 }
@@ -564,10 +542,9 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         }
 
         // leave_depot - jedes Fahrzeug verlässt das Depot
-        for (int k = 0; k<D.num_vehicles; k++)
-        {
-            for (int j = 1; j<=2*n+1; j++)
-            {
+        // ~ leave_depot - every vehicle leaves the depot
+        for (int k = 0; k<D.num_vehicles; k++) {
+            for (int j = 1; j<=2*n+1; j++) {
                 expr += x[0][j][k];
             }
             name << "leave_depot_" << k;
@@ -578,15 +555,11 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         model.add(leave_depot);
 
         // flow preservation
-        for (int k=0; k<D.num_vehicles; k++)
-        {
+        for (int k=0; k<D.num_vehicles; k++) {
             flow_preservation[k] = IloRangeArray(env,D.num_nodes+2);
-            for (int i=1; i<=2*n; i++)
-            {
-                for (int j = 0; j<=2*n+1; j++)
-                {
-                    if (j!=i)
-                        expr += x[j][i][k] - x[i][j][k];
+            for (int i=1; i<=2*n; i++) {
+                for (int j = 0; j<=2*n+1; j++) {
+                    if (j!=i) expr += x[j][i][k] - x[i][j][k];
                 }
                 name << "flow_preservation_{" << k << "," << i << "}";
                 flow_preservation[k][i] = IloRange(env, 0, expr, 0, name.str().c_str());

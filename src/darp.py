@@ -22,6 +22,7 @@ from datetime import datetime, date
 import formGaul as gaul
 import formCordeau0 as cordeau0
 import formCordeau1 as cordeau1
+import formCordeau2 as cordeau2
 
 if __name__ == "__main__":
 
@@ -41,5 +42,7 @@ if __name__ == "__main__":
         cordeau0.form_cordeau(method_,data_,out_path_,instance_)
     elif form_ == "cordeau1":
         cordeau1.form_cordeau(method_,data_,out_path_,instance_)
+    elif form_ == "cordeau2":
+        cordeau2.form_cordeau(method_,data_,out_path_,instance_)
     else:
     	print("parameters errado!")

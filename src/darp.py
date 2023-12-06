@@ -43,6 +43,6 @@ if __name__ == "__main__":
     elif form_ == "cordeau1":
         cordeau1.form_cordeau(method_,data_,out_path_,instance_)
     elif form_ == "cordeau2":
-        cordeau2.form_cordeau(method_,data_,out_path_,instance_)
+        cordeau2.form_cordeau(method_,data_,out_path_,instance_,inst_)
     else:
     	print("parameters errado!")

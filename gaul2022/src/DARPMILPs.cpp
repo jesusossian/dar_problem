@@ -331,6 +331,8 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
     { 
         IloModel model(env);
         
+        std::cout << "n = " << n;
+        
         // Variables
         typedef IloArray<IloNumVarArray> NumVarMatrix;
         typedef IloArray<NumVarMatrix>   NumVar3Matrix;
@@ -570,10 +572,8 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         }
         
         // return_depot
-        for (int k=0; k<D.num_vehicles; k++)
-        {
-            for (int i=0; i<=2*n; i++)
-            {
+        for (int k=0; k<D.num_vehicles; k++) {
+            for (int i=0; i<=2*n; i++) {
                 expr += x[i][2*n+1][k];
             }
             name << "return_depot_" << k;
@@ -584,24 +584,18 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         model.add(return_depot);
         
         
-        for (int k=0; k<D.num_vehicles; k++)
-        {
-            for (int j=1; j<=2*n; j++)
-            {
+        for (int k=0; k<D.num_vehicles; k++) {
+            for (int j=1; j<=2*n; j++) {
                 expr = -B[j] + B_0[k] + D.nodes[0].service_time + D.d[0][j] - DARPH_MAX(0, D.nodes[0].end_tw + D.nodes[0].service_time + D.d[0][j] - D.nodes[j].start_tw) * (1 - x[0][j][k]);
                 model.add(IloRange(env,expr,0));
                 expr.clear();
             }
         }
 
-        for (int i=1; i<=2*n; i++)
-        {
-            for (int j=1; j<=2*n; j++)
-            {
-                if (j!=i)
-                {
-                    for (int k=0; k<D.num_vehicles; k++)
-                    {
+        for (int i=1; i<=2*n; i++) {
+            for (int j=1; j<=2*n; j++) {
+                if (j!=i) {
+                    for (int k=0; k<D.num_vehicles; k++) {
                         expr2 += x[i][j][k];
                     }
                     expr = -B[j] + B[i] + D.nodes[i].service_time + D.d[i][j] - DARPH_MAX(0, D.nodes[i].end_tw + D.nodes[i].service_time + D.d[i][j] - D.nodes[j].start_tw) * (1 - expr2);
@@ -612,26 +606,22 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
             }
         }
 
-        for (int k=0; k<D.num_vehicles; k++)
-        {
-            for (int i=1; i<=2*n; i++)
-            {
+        for (int k=0; k<D.num_vehicles; k++) {
+            for (int i=1; i<=2*n; i++) {
                 expr = -B_2n1[k] + B[i] + D.nodes[i].service_time + D.d[i][0] - DARPH_MAX(0, D.nodes[i].end_tw + D.nodes[i].service_time + D.d[i][0] - D.nodes[0].start_tw) * (1 - x[i][2*n+1][k]);
                 model.add(IloRange(env,expr,0));
                 expr.clear();
             }
         }
         
-        for (int k=0; k<D.num_vehicles; k++)
-        {
+        for (int k=0; k<D.num_vehicles; k++) {
             expr = -B_2n1[k] + B_0[k] + D.nodes[0].service_time + D.d[0][0] - DARPH_MAX(0, D.nodes[0].end_tw + D.nodes[0].service_time + D.d[0][0] - D.nodes[0].start_tw) * (1-x[0][2*n+1][k]);
             model.add(IloRange(env,expr,0));
             expr.clear();
         }
         
         // ride time
-        for (int i=1; i<=n; i++)
-        {
+        for (int i=1; i<=n; i++) {
             expr = L[i] - B[n+i] + (B[i] + D.nodes[i].service_time);
             name << "ride_time_" << i;
             model.add(IloRange(env, 0, expr, 0, name.str().c_str()));
@@ -705,7 +695,7 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
         
         // Create the solver object
         IloCplex cplex(model);
-        cplex.exportModel("qkp.lp");
+        cplex.exportModel("dar_problem.lp");
         
         const sec dur_model = clock::now() - before;
 

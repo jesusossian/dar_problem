@@ -1,7 +1,7 @@
 #!/bin/bash
 
 method_=mip
-form_=cordeau2
+form_=cordeau0
 
 mkdir -p ../result
 #mkdir -p ${inst_}s/${inst_}s${dim_}

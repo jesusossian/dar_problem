@@ -39,10 +39,10 @@ if __name__ == "__main__":
     instance_ = f"{method_}_{form_}_{inst_}.txt"
 	
     if form_ == "cordeau0":
-        cordeau0.form_cordeau(method_,data_,out_path_,instance_)
+        cordeau0.form_cordeau(method_,data_,out_path_,instance_,inst_,form_)
     elif form_ == "cordeau1":
         cordeau1.form_cordeau(method_,data_,out_path_,instance_)
     elif form_ == "cordeau2":
-        cordeau2.form_cordeau(method_,data_,out_path_,instance_,inst_)
+        cordeau2.form_cordeau(method_,data_,out_path_,instance_)
     else:
     	print("parameters errado!")

@@ -321,9 +321,9 @@ bool EBMILP<Q>::solve_cordeau(DARP& D, DARPGraph<Q>& G)
     std::stringstream name;
 
     // create graph
-    check_paths(D);
-    G.create_graph(D,f); 
-    create_maps(D, G);
+    check_paths(D); // DARPSolver, line 38
+    G.create_graph(D,f); // DARPGraph, line 634
+    create_maps(D, G); // DARPGraph, line 16
     
     IloEnv env;
     
